@@ -187,10 +187,11 @@ class DragDropWidget:
         
         # Callback to parent
         if self.on_file_selected:
-            self.on_file_selected(file_path, filename)
+            self.on_file_selected(file_path, filename, reset_all=False)
     
     def reset_file(self):
-        """Reset the file selection"""
+        """Master reset - stop all tasks and clear file selection"""
+        # Reset file selection
         self.selected_file = None
         self.status_text.configure(
             text="No file selected",
@@ -198,9 +199,9 @@ class DragDropWidget:
         )
         self.reset_button.pack_forget()
         
-        # Callback to parent
+        # Callback to parent to reset everything
         if self.on_file_selected:
-            self.on_file_selected(None, None)
+            self.on_file_selected(None, None, reset_all=True)
     
     def get_widget(self):
         """Return the main container"""

@@ -1,13 +1,11 @@
 """
-Status panel component for showing logs and file information - Light theme
+Status panel component with integrated terminal-style command output
 """
 
 import tkinter as tk
 from tkinter import scrolledtext
 from constants.app_config import AppConfig
 import threading
-import subprocess
-import queue
 
 class StatusPanel:
     def __init__(self, parent):
@@ -18,12 +16,14 @@ class StatusPanel:
             'file_system': 'Unknown',
             'status': 'Ready'
         }
-        self.command_queue = queue.Queue()
+        self.is_running_command = False
+        self.current_task_thread = None
+        self.task_cancelled = False
         
         self.create_status_panel()
     
     def create_status_panel(self):
-        """Create the status panel"""
+        """Create the status panel with integrated terminal view"""
         # Main container
         self.container = tk.Frame(
             self.parent,
@@ -42,49 +42,29 @@ class StatusPanel:
         )
         title_label.pack(pady=(10, 5))
         
-        # File info section
-        info_frame = tk.Frame(self.container, bg="#ffffff", relief=tk.RAISED, bd=1)
-        info_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        # File status
-        self.file_status_label = tk.Label(
-            info_frame,
-            text="No file selected",
-            font=(AppConfig.FONT_FAMILY, 10),
-            bg="#ffffff",
-            fg="#666666"
+        # Status display area (terminal-style)
+        self.status_frame = tk.Frame(
+            self.container, 
+            bg="#ffffff", 
+            relief=tk.RAISED, 
+            bd=1
         )
-        self.file_status_label.pack(anchor=tk.W, padx=10, pady=5)
+        self.status_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        # Generation info
-        self.generation_label = tk.Label(
-            info_frame,
-            text="Generation: Unknown",
-            font=(AppConfig.FONT_FAMILY, 10),
+        # Terminal-style text area (initially shows file info, then command output)
+        self.status_text = scrolledtext.ScrolledText(
+            self.status_frame,
+            height=12,
             bg="#ffffff",
-            fg="#666666"
+            fg="#333333",
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            bd=0,
+            insertbackground="#333333",
+            state=tk.DISABLED,
+            wrap=tk.WORD
         )
-        self.generation_label.pack(anchor=tk.W, padx=10, pady=2)
-        
-        # File system info
-        self.filesystem_label = tk.Label(
-            info_frame,
-            text="File System: Unknown",
-            font=(AppConfig.FONT_FAMILY, 10),
-            bg="#ffffff",
-            fg="#666666"
-        )
-        self.filesystem_label.pack(anchor=tk.W, padx=10, pady=2)
-        
-        # Ready status
-        self.ready_label = tk.Label(
-            info_frame,
-            text="Ready",
-            font=(AppConfig.FONT_FAMILY, 12, "bold"),
-            bg="#ffffff",
-            fg="#4caf50"  # Green color
-        )
-        self.ready_label.pack(anchor=tk.W, padx=10, pady=(10, 10))
+        self.status_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Operations section
         ops_label = tk.Label(
@@ -107,7 +87,7 @@ class StatusPanel:
             command=self.run_build,
             font=(AppConfig.FONT_FAMILY, AppConfig.BUTTON_FONT_SIZE),
             bg="#2196f3",
-            fg="#000000",  # Black text
+            fg="#000000",
             relief=tk.FLAT,
             bd=0,
             highlightthickness=0,
@@ -124,7 +104,7 @@ class StatusPanel:
             command=self.run_analysis,
             font=(AppConfig.FONT_FAMILY, AppConfig.BUTTON_FONT_SIZE),
             bg="#ff9800",
-            fg="#000000",  # Black text
+            fg="#000000",
             relief=tk.FLAT,
             bd=0,
             highlightthickness=0,
@@ -138,10 +118,10 @@ class StatusPanel:
         self.clear_button = tk.Button(
             button_frame,
             text="Clear",
-            command=self.clear_log,
+            command=self.clear_status,
             font=(AppConfig.FONT_FAMILY, AppConfig.BUTTON_FONT_SIZE),
             bg="#757575",
-            fg="#000000",  # Black text
+            fg="#000000",
             relief=tk.FLAT,
             bd=0,
             highlightthickness=0,
@@ -151,77 +131,101 @@ class StatusPanel:
         )
         self.clear_button.pack(side=tk.RIGHT)
         
-        # Log area
-        log_label = tk.Label(
-            self.container,
-            text="Command Output:",
-            font=(AppConfig.FONT_FAMILY, 10, "bold"),
-            bg="#e8e8e8",
-            fg="#333333"
-        )
-        log_label.pack(anchor=tk.W, padx=10, pady=(10, 2))
-        
-        # Scrolled text for logs (READ-ONLY)
-        self.log_text = scrolledtext.ScrolledText(
-            self.container,
-            height=8,
-            bg="#ffffff",
-            fg="#333333",  # Dark text on white background
-            font=("Consolas", 9),
-            relief=tk.RAISED,
-            bd=1,
-            insertbackground="#333333",
-            state=tk.DISABLED,  # Make it read-only
-            wrap=tk.WORD
-        )
-        self.log_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
-        
-        # Initial log message
-        self.add_log("System ready. Select a .bin file to begin.")
+        # Initialize with default status
+        self.show_default_status()
     
-    def update_file_info(self, filepath, filename):
-        """Update file information display"""
-        if filepath:
-            self.file_info['filename'] = filename
-            self.file_status_label.configure(
-                text=f"File: {filename}",
-                fg="#4caf50"
-            )
-            # Simulate file analysis
-            self.generation_label.configure(text="Generation: ME 11.x")
-            self.filesystem_label.configure(text="File System: UEFI")
-            self.add_log(f"File loaded: {filename}")
-            self.add_log("File analysis complete. Ready for operations.")
+    def show_default_status(self):
+        """Show the default file status information"""
+        self.status_text.configure(state=tk.NORMAL)
+        self.status_text.delete(1.0, tk.END)
+        
+        # File information
+        if self.file_info['filename']:
+            self.status_text.insert(tk.END, f"File: {self.file_info['filename']}\n")
         else:
-            self.file_status_label.configure(
-                text="No file selected",
-                fg="#666666"
-            )
-            self.generation_label.configure(text="Generation: Unknown")
-            self.filesystem_label.configure(text="File System: Unknown")
-            self.add_log("File selection cleared.")
+            self.status_text.insert(tk.END, "No file selected\n")
+        
+        self.status_text.insert(tk.END, f"Generation: {self.file_info['generation']}\n")
+        self.status_text.insert(tk.END, f"File System: {self.file_info['file_system']}\n\n")
+        
+        # Ready status in green
+        self.status_text.insert(tk.END, "Ready", "ready")
+        
+        # Configure green color for "Ready"
+        self.status_text.tag_configure("ready", foreground="#4caf50", font=("Consolas", 9, "bold"))
+        
+        self.status_text.configure(state=tk.DISABLED)
+        self.is_running_command = False
     
-    def add_log(self, message):
-        """Add message to log (read-only)"""
-        self.log_text.configure(state=tk.NORMAL)  # Temporarily enable editing
-        self.log_text.insert(tk.END, f"> {message}\n")
-        self.log_text.see(tk.END)
-        self.log_text.configure(state=tk.DISABLED)  # Make read-only again
+    def update_file_info(self, filepath, filename, reset_all=False):
+        """Update file information and refresh status display"""
+        if reset_all:
+            # Master reset - stop all tasks and clear everything
+            self.stop_all_tasks()
+            self.file_info['filename'] = None
+            self.file_info['generation'] = 'Unknown'
+            self.file_info['file_system'] = 'Unknown'
+        elif filepath:
+            self.file_info['filename'] = filename
+            # Simulate file analysis
+            self.file_info['generation'] = 'ME 11.x'
+            self.file_info['file_system'] = 'UEFI'
+        else:
+            self.file_info['filename'] = None
+            self.file_info['generation'] = 'Unknown'
+            self.file_info['file_system'] = 'Unknown'
+        
+        # Refresh the status display
+        if not self.is_running_command or reset_all:
+            self.show_default_status()
     
-    def clear_log(self):
-        """Clear the log"""
-        self.log_text.configure(state=tk.NORMAL)
-        self.log_text.delete(1.0, tk.END)
-        self.add_log("Log cleared.")
+    def add_command_output(self, message):
+        """Add command output to the status area"""
+        self.status_text.configure(state=tk.NORMAL)
+        self.status_text.insert(tk.END, f"> {message}\n")
+        self.status_text.see(tk.END)
+        self.status_text.configure(state=tk.DISABLED)
+    
+    def start_command_mode(self):
+        """Switch to command output mode"""
+        self.is_running_command = True
+        self.status_text.configure(state=tk.NORMAL)
+        self.status_text.delete(1.0, tk.END)
+        self.status_text.configure(state=tk.DISABLED)
+    
+    def clear_status(self):
+        """Clear status and return to default file information view"""
+        self.stop_all_tasks()
+        self.show_default_status()
+    
+    def stop_all_tasks(self):
+        """Stop all running tasks and reset to ready state"""
+        # Cancel any running tasks
+        self.task_cancelled = True
+        self.is_running_command = False
+        
+        # If there's a running thread, mark it for cancellation
+        if self.current_task_thread and self.current_task_thread.is_alive():
+            self.task_cancelled = True
+        
+        # Reset task state
+        self.current_task_thread = None
     
     def run_build(self):
-        """Run build command"""
+        """Run build command with output in status area"""
         if not self.file_info['filename']:
-            self.add_log("❌ Error: No file selected!")
+            self.start_command_mode()
+            self.add_command_output("❌ Error: No file selected!")
             return
         
-        self.add_log("🔨 Starting BUILD (ME Clean) process...")
-        self.add_log("Initializing ME cleaning tools...")
+        # Stop any existing tasks
+        self.stop_all_tasks()
+        
+        # Switch to command mode
+        self.start_command_mode()
+        self.add_command_output("🔨 Starting BUILD (ME Clean) process...")
+        self.add_command_output("Initializing ME cleaning tools...")
+        
         # Simulate command execution
         self.simulate_command_output([
             "Loading BIOS file...",
@@ -229,15 +233,22 @@ class StatusPanel:
             "Cleaning ME components...",
             "Rebuilding BIOS structure...",
             "✅ BUILD completed successfully!"
-        ])
+        ], "BUILD")
     
     def run_analysis(self):
-        """Run ME analysis"""
+        """Run ME analysis with output in status area"""
         if not self.file_info['filename']:
-            self.add_log("❌ Error: No file selected!")
+            self.start_command_mode()
+            self.add_command_output("❌ Error: No file selected!")
             return
         
-        self.add_log("🔍 Starting MEA Analysis...")
+        # Stop any existing tasks
+        self.stop_all_tasks()
+        
+        # Switch to command mode
+        self.start_command_mode()
+        self.add_command_output("🔍 Starting MEA Analysis...")
+        
         # Simulate command execution
         self.simulate_command_output([
             "Launching ME Analyzer...",
@@ -245,15 +256,24 @@ class StatusPanel:
             "Extracting ME modules...",
             "Generating analysis report...",
             "✅ Analysis completed successfully!"
-        ])
+        ], "ANALYSIS")
     
-    def simulate_command_output(self, messages):
-        """Simulate real-time command output"""
+    def simulate_command_output(self, messages, task_name):
+        """Simulate real-time command output with cancellation support"""
         def output_messages():
+            self.task_cancelled = False
             for i, msg in enumerate(messages):
-                self.parent.after(i * 1000, lambda m=msg: self.add_log(m))
+                if self.task_cancelled:
+                    # Task was cancelled, show cancellation message
+                    self.parent.after(0, lambda: self.add_command_output(f"❌ {task_name} task cancelled by user"))
+                    break
+                
+                # Schedule the message output
+                self.parent.after(i * 1000, lambda m=msg: self.add_command_output(m) if not self.task_cancelled else None)
         
-        threading.Thread(target=output_messages, daemon=True).start()
+        # Start the task thread
+        self.current_task_thread = threading.Thread(target=output_messages, daemon=True)
+        self.current_task_thread.start()
     
     def get_widget(self):
         """Return the main container"""

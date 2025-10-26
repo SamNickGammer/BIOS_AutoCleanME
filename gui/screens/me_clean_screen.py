@@ -1,11 +1,12 @@
 """
-ME Clean screen implementation with instant tab switching like main navigation
+ME Clean screen implementation with instant tab switching using top navigation style
 """
 
 import tkinter as tk
 from constants.app_config import AppConfig
 from functions.me_clean_functions import MECleanFunctions
 from gui.components.modern_frame import ModernFrame
+from gui.components.modern_button import ModernButton
 from gui.components.drag_drop import DragDropWidget
 from gui.components.status_panel import StatusPanel
 
@@ -28,12 +29,21 @@ class MECleanScreen:
         
         self.frame = ModernFrame(self.parent)
         
-        # Tab navigation bar (like main navigation)
+        # Tab navigation bar (using same style as top navigation)
         self.create_tab_navigation()
+        
+        # Separator line (like main navigation)
+        separator = tk.Frame(
+            self.frame,
+            height=1,
+            bg=AppConfig.BORDER_COLOR,
+            relief=tk.FLAT
+        )
+        separator.pack(fill=tk.X, padx=15, pady=(12, 0))
         
         # Content area for tab screens
         self.content_frame = ModernFrame(self.frame)
-        self.content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
         # Initialize all tab screens immediately
         self.initialize_tab_screens()
@@ -44,17 +54,16 @@ class MECleanScreen:
         return self.frame
     
     def create_tab_navigation(self):
-        """Create the tab navigation bar"""
-        # Tab navigation frame
-        nav_frame = tk.Frame(
-            self.frame,
-            bg=AppConfig.SECONDARY_COLOR,
-            height=40
-        )
-        nav_frame.pack(fill=tk.X, padx=10, pady=(10, 0))
-        nav_frame.pack_propagate(False)
+        """Create the tab navigation bar using same style as top navigation"""
+        # Navigation section
+        nav_section = ModernFrame(self.frame, bg=AppConfig.PRIMARY_COLOR)
+        nav_section.pack(fill=tk.X, padx=15, pady=(15, 0))
         
-        # Tab buttons
+        # Navigation buttons container
+        nav_buttons_frame = ModernFrame(nav_section, bg=AppConfig.PRIMARY_COLOR)
+        nav_buttons_frame.pack(anchor=tk.W)
+        
+        # Tab buttons (using same style as top navigation)
         tab_configs = [
             ("auto", "Auto"),
             ("fitc", "FITC"),
@@ -62,21 +71,13 @@ class MECleanScreen:
         ]
         
         for tab_id, title in tab_configs:
-            btn = tk.Button(
-                nav_frame,
+            btn = ModernButton(
+                nav_buttons_frame,
                 text=title,
                 command=lambda t=tab_id: self.show_tab(t),
-                font=(AppConfig.FONT_FAMILY, AppConfig.BUTTON_FONT_SIZE, "bold"),
-                bg="#ffffff",
-                fg="#333333",
-                relief=tk.FLAT,
-                bd=0,
-                highlightthickness=0,
-                padx=20,
-                pady=8,
-                cursor='hand2'
+                is_nav=True
             )
-            btn.pack(side=tk.LEFT, padx=2, pady=5)
+            btn.pack(side=tk.LEFT, padx=(0, 8))
             self.tab_buttons[tab_id] = btn
     
     def initialize_tab_screens(self):
@@ -94,9 +95,19 @@ class MECleanScreen:
         """Create the AUTO tab screen"""
         auto_frame = ModernFrame(self.content_frame)
         
+        # Title
+        # title_label = tk.Label(
+        #     auto_frame,
+        #     text="🔧 ME Clean Auto",
+        #     font=(AppConfig.FONT_FAMILY, 16, "bold"),
+        #     bg=AppConfig.PRIMARY_COLOR,
+        #     fg="#4A90E2"
+        # )
+        # title_label.pack(pady=(0, 20))
+        
         # Main content area (horizontal layout)
         content_area = ModernFrame(auto_frame)
-        content_area.pack(fill=tk.BOTH, expand=True, pady=10)
+        content_area.pack(fill=tk.BOTH, expand=True)
         
         # Left section - Drag & Drop
         left_section = ModernFrame(content_area)
@@ -105,10 +116,10 @@ class MECleanScreen:
         # Section title
         left_title = tk.Label(
             left_section,
-            text="ME Clean Auto - Drop BIOS File Here",
+            text="🔧 ME Clean Auto - Drop BIOS File Here",
             font=(AppConfig.FONT_FAMILY, 12, "bold"),
             bg=AppConfig.PRIMARY_COLOR,
-            fg="#4A90E2"
+            fg="#333333"
         )
         left_title.pack(pady=(0, 10))
         
@@ -132,25 +143,40 @@ class MECleanScreen:
         """Create the FITC tab screen"""
         fitc_frame = ModernFrame(self.content_frame)
         
-        # FITC content
-        fitc_label = tk.Label(
+        # Title
+        title_label = tk.Label(
             fitc_frame,
-            text="🔧 FITC Tab",
+            text="🔧 FITC Configuration",
             font=(AppConfig.FONT_FAMILY, 16, "bold"),
             bg=AppConfig.PRIMARY_COLOR,
             fg="#FF9800"
         )
-        fitc_label.pack(pady=50)
+        title_label.pack(pady=(20, 10))
         
-        fitc_desc = tk.Label(
+        # Description
+        desc_label = tk.Label(
             fitc_frame,
-            text="FITC (Flash Image Tool Configuration) functionality will be implemented here.",
+            text="Flash Image Tool Configuration",
+            font=(AppConfig.FONT_FAMILY, 12),
+            bg=AppConfig.PRIMARY_COLOR,
+            fg="#666666"
+        )
+        desc_label.pack(pady=(0, 30))
+        
+        # Content area
+        content_area = ModernFrame(fitc_frame)
+        content_area.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Placeholder content
+        placeholder_label = tk.Label(
+            content_area,
+            text="FITC functionality will be implemented here.\n\nThis section will include:\n• Flash configuration tools\n• Image manipulation options\n• Advanced BIOS settings",
             font=(AppConfig.FONT_FAMILY, AppConfig.FONT_SIZE),
             bg=AppConfig.PRIMARY_COLOR,
             fg="#666666",
-            wraplength=400
+            justify=tk.LEFT
         )
-        fitc_desc.pack(pady=20)
+        placeholder_label.pack(pady=50)
         
         return fitc_frame
     
@@ -158,100 +184,66 @@ class MECleanScreen:
         """Create the Manual tab screen"""
         manual_frame = ModernFrame(self.content_frame)
         
-        # Manual content
-        manual_label = tk.Label(
+        # Title
+        title_label = tk.Label(
             manual_frame,
-            text="⚙️ Manual Tab",
+            text="⚙️ Manual Operations",
             font=(AppConfig.FONT_FAMILY, 16, "bold"),
             bg=AppConfig.PRIMARY_COLOR,
             fg="#9C27B0"
         )
-        manual_label.pack(pady=50)
+        title_label.pack(pady=(20, 10))
         
-        manual_desc = tk.Label(
+        # Description
+        desc_label = tk.Label(
             manual_frame,
-            text="Manual ME cleaning operations and advanced settings will be available here.",
+            text="Advanced Manual ME Cleaning",
+            font=(AppConfig.FONT_FAMILY, 12),
+            bg=AppConfig.PRIMARY_COLOR,
+            fg="#666666"
+        )
+        desc_label.pack(pady=(0, 30))
+        
+        # Content area
+        content_area = ModernFrame(manual_frame)
+        content_area.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Placeholder content
+        placeholder_label = tk.Label(
+            content_area,
+            text="Manual ME cleaning operations will be available here.\n\nThis section will include:\n• Custom cleaning parameters\n• Advanced ME region tools\n• Expert configuration options",
             font=(AppConfig.FONT_FAMILY, AppConfig.FONT_SIZE),
             bg=AppConfig.PRIMARY_COLOR,
             fg="#666666",
-            wraplength=400
+            justify=tk.LEFT
         )
-        manual_desc.pack(pady=20)
+        placeholder_label.pack(pady=50)
         
         return manual_frame
     
     def show_tab(self, tab_id):
-        """Switch to specified tab with loading animation"""
-        # Show loading screen
-        self.show_loading()
-        
-        # Schedule the actual tab switch after a brief delay
-        self.frame.after(200, lambda: self.switch_tab_content(tab_id))
-    
-    def show_loading(self):
-        """Show a small loading screen"""
+        """Switch to specified tab instantly (like main navigation)"""
         # Hide current tab
         if self.current_tab and self.current_tab in self.tab_screens:
             self.tab_screens[self.current_tab].pack_forget()
         
-        # Create loading frame
-        self.loading_frame = tk.Frame(
-            self.content_frame,
-            bg=AppConfig.PRIMARY_COLOR
-        )
-        self.loading_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Loading spinner (using text animation)
-        self.loading_label = tk.Label(
-            self.loading_frame,
-            text="⏳ Loading...",
-            font=(AppConfig.FONT_FAMILY, 14),
-            bg=AppConfig.PRIMARY_COLOR,
-            fg="#666666"
-        )
-        self.loading_label.pack(expand=True)
-        
-        # Animate loading text
-        self.animate_loading()
-    
-    def animate_loading(self):
-        """Animate the loading text"""
-        current_text = self.loading_label.cget("text")
-        if "..." in current_text:
-            dots = current_text.count(".")
-            if dots >= 3:
-                new_text = "⏳ Loading"
-            else:
-                new_text = current_text + "."
-        else:
-            new_text = "⏳ Loading."
-        
-        self.loading_label.configure(text=new_text)
-    
-    def switch_tab_content(self, tab_id):
-        """Actually switch the tab content"""
-        # Hide loading screen
-        if hasattr(self, 'loading_frame'):
-            self.loading_frame.destroy()
-        
-        # Reset previous button style
-        if self.current_tab and self.current_tab in self.tab_buttons:
-            self.tab_buttons[self.current_tab].configure(
-                bg="#ffffff",
-                fg="#333333"
-            )
+        # Reset ALL buttons to inactive first
+        for btn_id, btn in self.tab_buttons.items():
+            btn.set_active(False)
         
         # Show new tab
         if tab_id in self.tab_screens:
             self.tab_screens[tab_id].pack(fill=tk.BOTH, expand=True)
-            # Highlight active button with AppConfig color
-            self.tab_buttons[tab_id].configure(
-                bg=AppConfig.BUTTON_ACTIVE_COLOR,  # Dark background
-                fg=AppConfig.BUTTON_ACTIVE_TEXT    # Blue text
-            )
+            
+            # Set active button
+            self.active_tab_button = self.tab_buttons[tab_id]
+            self.active_tab_button.set_active(True)
             self.current_tab = tab_id
+        
+        # Force update the display
+        self.frame.update_idletasks()
     
-    def on_file_selected(self, filepath, filename):
+    def on_file_selected(self, filepath, filename, reset_all=False):
         """Handle file selection from drag & drop"""
         if self.status_panel:
-            self.status_panel.update_file_info(filepath, filename)
+            self.status_panel.update_file_info(filepath, filename, reset_all)
