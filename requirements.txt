@@ -1,0 +1,6 @@
+# No external dependencies required for basic tkinter GUI
+# tkinter comes built-in with Python
+
+# Optional: For enhanced GUI features, you can add:
+pillow>=9.0.0
+ttkthemes>=3.2.0
