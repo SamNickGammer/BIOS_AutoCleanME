@@ -109,9 +109,10 @@ class MECleanScreen:
         content_area = ModernFrame(auto_frame)
         content_area.pack(fill=tk.BOTH, expand=True)
         
-        # Left section - Drag & Drop
+        # Left section - Drag & Drop (narrower)
         left_section = ModernFrame(content_area)
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        left_section.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+        left_section.configure(width=300)  # Fixed width for drag & drop
         
         # Section title
         left_title = tk.Label(
@@ -128,7 +129,7 @@ class MECleanScreen:
         drag_drop_widget = self.drag_drop.get_widget()
         drag_drop_widget.pack(fill=tk.BOTH, expand=True)
         
-        # Right section - Status Panel
+        # Right section - Status Panel (takes remaining space)
         right_section = ModernFrame(content_area)
         right_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
         
@@ -143,42 +144,100 @@ class MECleanScreen:
         """Create the FITC tab screen"""
         fitc_frame = ModernFrame(self.content_frame)
         
+        # Main content area (horizontal layout like Auto)
+        content_area = ModernFrame(fitc_frame)
+        content_area.pack(fill=tk.BOTH, expand=True)
+        
+        # Left section - Drag & Drop (narrower)
+        left_section = ModernFrame(content_area)
+        left_section.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+        left_section.configure(width=300)  # Fixed width for drag & drop
+        
+        # Section title
+        left_title = tk.Label(
+            left_section,
+            text="🔧 ME Clean FITC - Drop BIOS File Here",
+            font=(AppConfig.FONT_FAMILY, 12, "bold"),
+            bg=AppConfig.PRIMARY_COLOR,
+            fg="#333333"
+        )
+        left_title.pack(pady=(0, 10))
+        
+        # Drag & Drop widget (same as Auto)
+        self.fitc_drag_drop = DragDropWidget(left_section, self.on_fitc_file_selected)
+        fitc_drag_drop_widget = self.fitc_drag_drop.get_widget()
+        fitc_drag_drop_widget.pack(fill=tk.BOTH, expand=True)
+        
+        # Right section - Coming Soon Panel (takes remaining space)
+        right_section = ModernFrame(content_area)
+        right_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        
+        # Coming Soon panel
+        coming_soon_panel = self.create_coming_soon_panel(right_section)
+        coming_soon_panel.pack(fill=tk.BOTH, expand=True)
+        
+        return fitc_frame
+    
+    def create_coming_soon_panel(self, parent):
+        """Create the Coming Soon panel for FITC"""
+        # Main container
+        container = tk.Frame(
+            parent,
+            bg="#e8e8e8",  # Light gray background
+            relief=tk.FLAT,
+            bd=0
+        )
+        
         # Title
         title_label = tk.Label(
-            fitc_frame,
-            text="🔧 FITC Configuration",
-            font=(AppConfig.FONT_FAMILY, 16, "bold"),
-            bg=AppConfig.PRIMARY_COLOR,
-            fg="#FF9800"
+            container,
+            text="FITC ME Clean",
+            font=(AppConfig.FONT_FAMILY, 12, "bold"),
+            bg="#e8e8e8",
+            fg="#333333"
         )
-        title_label.pack(pady=(20, 10))
+        title_label.pack(pady=(10, 5))
+        
+        # Coming Soon area
+        coming_soon_frame = tk.Frame(
+            container, 
+            bg="#ffffff", 
+            relief=tk.RAISED, 
+            bd=1
+        )
+        coming_soon_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        # Coming Soon content
+        coming_soon_label = tk.Label(
+            coming_soon_frame,
+            text="Coming Soon!",
+            font=(AppConfig.FONT_FAMILY, 18, "bold"),
+            bg="#ffffff",
+            fg="#FF9800"  # Orange color
+        )
+        coming_soon_label.pack(pady=(50, 20))
         
         # Description
         desc_label = tk.Label(
-            fitc_frame,
-            text="Flash Image Tool Configuration",
-            font=(AppConfig.FONT_FAMILY, 12),
-            bg=AppConfig.PRIMARY_COLOR,
-            fg="#666666"
-        )
-        desc_label.pack(pady=(0, 30))
-        
-        # Content area
-        content_area = ModernFrame(fitc_frame)
-        content_area.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Placeholder content
-        placeholder_label = tk.Label(
-            content_area,
-            text="FITC functionality will be implemented here.\n\nThis section will include:\n• Flash configuration tools\n• Image manipulation options\n• Advanced BIOS settings",
+            coming_soon_frame,
+            text="FITC-based ME cleaning functionality will be available in future updates",
             font=(AppConfig.FONT_FAMILY, AppConfig.FONT_SIZE),
-            bg=AppConfig.PRIMARY_COLOR,
+            bg="#ffffff",
             fg="#666666",
-            justify=tk.LEFT
+            wraplength=300,
+            justify=tk.CENTER
         )
-        placeholder_label.pack(pady=50)
+        desc_label.pack(pady=(0, 50))
         
-        return fitc_frame
+        return container
+    
+    def on_fitc_file_selected(self, filepath, filename, reset_all=False):
+        """Handle file selection from FITC drag & drop"""
+        # For now, just show a message that FITC is coming soon
+        if filepath and not reset_all:
+            print(f"FITC: File selected - {filename} (Coming Soon functionality)")
+        elif reset_all:
+            print("FITC: Reset all triggered")
     
     def create_manual_screen(self):
         """Create the Manual tab screen"""

@@ -53,6 +53,16 @@ class DragDropWidget:
         )
         self.file_icon.pack(pady=(30, 10))
         
+        # Success checkmark (initially hidden)
+        self.success_icon = tk.Label(
+            self.drop_frame,
+            text="✅",
+            font=(AppConfig.FONT_FAMILY, 24),
+            bg="#ffffff",
+            fg="#4caf50"
+        )
+        # Don't pack initially - will be shown when file is selected
+        
         # Main text
         self.main_text = tk.Label(
             self.drop_frame,
@@ -182,6 +192,15 @@ class DragDropWidget:
             fg="#4caf50"  # Green color
         )
         
+        # Show success checkmark
+        self.success_icon.pack(pady=(5, 0))
+        
+        # Update file icon to show success state
+        self.file_icon.configure(
+            text="📄✅",
+            fg="#4caf50"
+        )
+        
         # Show reset button
         self.reset_button.pack(pady=(0, 10))
         
@@ -197,6 +216,16 @@ class DragDropWidget:
             text="No file selected",
             fg="#888888"
         )
+        
+        # Hide success elements
+        self.success_icon.pack_forget()
+        
+        # Reset file icon to default state
+        self.file_icon.configure(
+            text="📄",
+            fg="#666666"
+        )
+        
         self.reset_button.pack_forget()
         
         # Callback to parent to reset everything
