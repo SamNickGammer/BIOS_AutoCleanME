@@ -1,6 +1,7 @@
 # Required dependencies for GUI application
 pillow>=9.0.0  # For image handling in slideshow
 tkinterdnd2>=0.3.0  # For drag and drop functionality
+ttkthemes>=3.2.0  # For additional themes
 
 # tkinter comes built-in with Python
 # Optional: For enhanced GUI features, you can add:
