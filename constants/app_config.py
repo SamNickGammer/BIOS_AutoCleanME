@@ -25,3 +25,9 @@ class AppConfig:
     FONT_SIZE = 11
     BUTTON_FONT_SIZE = 9
     TITLE_FONT_SIZE = 14
+    
+    # Slideshow settings
+    SLIDESHOW_INTERVAL = 2500  # 2500ms auto-change interval
+    SLIDESHOW_WIDTH = 840      # Full window width
+    SLIDESHOW_HEIGHT = 380     # Reduced height to allow more footer spacing
+    SLIDESHOW_BORDER_RADIUS = 16  # Rounded corners

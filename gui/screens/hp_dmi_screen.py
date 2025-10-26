@@ -5,7 +5,8 @@ HP DMI screen implementation with modern light design
 import tkinter as tk
 from constants.app_config import AppConfig
 from functions.hp_dmi_functions import HPDMIFunctions
-from gui.styles import ModernButton, ModernFrame
+from gui.components.modern_button import ModernButton
+from gui.components.modern_frame import ModernFrame
 
 class HPDMIScreen:
     def __init__(self, parent):

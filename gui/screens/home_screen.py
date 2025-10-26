@@ -1,74 +1,147 @@
 """
-Home screen implementation with modern light design
+Home screen implementation with full-screen slideshow and proper footer
 """
 
 import tkinter as tk
 from constants.app_config import AppConfig
 from functions.app_functions import AppFunctions
-from gui.styles import ModernButton, ModernFrame
+from gui.components.modern_frame import ModernFrame
+from gui.components.slideshow import Slideshow
 
 class HomeScreen:
     def __init__(self, parent):
         self.parent = parent
         self.functions = AppFunctions()
         self.frame = None
+        self.slideshow = None
+        self.counter_label = None
     
     def create_screen(self):
-        """Create the modern home screen"""
+        """Create the home screen with full-screen slideshow"""
         if self.frame:
+            # Stop previous slideshow if exists
+            if self.slideshow:
+                self.slideshow.stop_auto_slideshow()
             self.frame.destroy()
         
         self.frame = ModernFrame(self.parent)
         
-        # Main content container
-        content_container = ModernFrame(self.frame)
-        content_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Main slideshow area (takes most space)
+        slideshow_main = ModernFrame(self.frame)
+        slideshow_main.pack(fill=tk.BOTH, expand=True)
         
-        # Welcome section
-        welcome_label = tk.Label(
-            content_container,
-            text="Welcome to Home",
-            font=(AppConfig.FONT_FAMILY, 20, "normal"),
-            fg=AppConfig.TEXT_COLOR,
-            bg=AppConfig.PRIMARY_COLOR
+        # Create slideshow container with navigation overlay
+        slideshow_container = tk.Frame(slideshow_main, bg=AppConfig.PRIMARY_COLOR)
+        slideshow_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Create slideshow
+        self.slideshow = Slideshow(slideshow_container)
+        slideshow_frame = self.slideshow.get_frame()
+        slideshow_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Left navigation button (absolute positioning)
+        left_btn = tk.Button(
+            slideshow_container,
+            text="◀",
+            command=self.previous_slide,
+            font=(AppConfig.FONT_FAMILY, 18, "bold"),
+            bg=AppConfig.BUTTON_ACTIVE_COLOR,
+            fg=AppConfig.BUTTON_ACTIVE_TEXT,
+            relief=tk.FLAT,
+            bd=0,
+            highlightthickness=0,
+            width=3,
+            height=2,
+            cursor='hand2'
         )
-        welcome_label.pack(pady=(0, 8))
+        left_btn.place(x=20, rely=0.5, anchor=tk.W)
         
-        # Subtitle
-        subtitle_label = tk.Label(
-            content_container,
-            text="Your main dashboard and control center",
+        # Right navigation button (absolute positioning)
+        right_btn = tk.Button(
+            slideshow_container,
+            text="▶",
+            command=self.next_slide,
+            font=(AppConfig.FONT_FAMILY, 18, "bold"),
+            bg=AppConfig.BUTTON_ACTIVE_COLOR,
+            fg=AppConfig.BUTTON_ACTIVE_TEXT,
+            relief=tk.FLAT,
+            bd=0,
+            highlightthickness=0,
+            width=3,
+            height=2,
+            cursor='hand2'
+        )
+        right_btn.place(x=-20, rely=0.5, anchor=tk.E, relx=1.0)
+        
+        # Black footer positioned higher from bottom
+        footer_frame = tk.Frame(
+            self.frame,
+            bg="#000000",  # Black background
+            height=35
+        )
+        footer_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        footer_frame.pack_propagate(False)
+        
+        # Footer content
+        footer_content = tk.Frame(footer_frame, bg="#000000")
+        footer_content.pack(fill=tk.BOTH, expand=True)
+        
+        # Counter on left
+        self.counter_label = tk.Label(
+            footer_content,
+            text="",
             font=(AppConfig.FONT_FAMILY, AppConfig.FONT_SIZE),
-            fg="#666666",  # Gray text
-            bg=AppConfig.PRIMARY_COLOR
+            fg="#ffffff",
+            bg="#000000"
         )
-        subtitle_label.pack(pady=(0, 30))
+        self.counter_label.pack(side=tk.LEFT, padx=15, pady=8)
         
-        # Action buttons section
-        buttons_frame = ModernFrame(content_container)
-        buttons_frame.pack(pady=20)
-        
-        # Sample action button
-        hello_button = ModernButton(
-            buttons_frame,
-            text="Say Hello World",
-            command=self.functions.show_hello_world
-        )
-        hello_button.pack(pady=8)
-        
-        # Info section
-        info_frame = ModernFrame(content_container)
-        info_frame.pack(fill=tk.X, pady=(40, 0))
-        
-        info_text = tk.Label(
-            info_frame,
-            text="Use the navigation buttons above to access different tools and utilities.",
+        # Credits in center
+        credits_text = tk.Label(
+            footer_content,
+            text="💜 Made with love by Samnickgammer 🚀",
             font=(AppConfig.FONT_FAMILY, AppConfig.FONT_SIZE),
-            fg="#777777",  # Muted text
+            fg="#ffffff",
+            bg="#000000"
+        )
+        credits_text.pack(expand=True, pady=8)
+        
+        # Spacer to push footer up from bottom edge
+        spacer_frame = tk.Frame(
+            self.frame,
             bg=AppConfig.PRIMARY_COLOR,
-            wraplength=600,
-            justify=tk.CENTER
+            height=25
         )
-        info_text.pack()
+        spacer_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        spacer_frame.pack_propagate(False)
+        
+        # Update counter initially and set up periodic updates
+        self.update_counter()
+        self.schedule_counter_update()
         
         return self.frame
+    
+    def previous_slide(self):
+        """Navigate to previous slide"""
+        if self.slideshow:
+            self.slideshow.previous_image()
+            self.update_counter()
+    
+    def next_slide(self):
+        """Navigate to next slide"""
+        if self.slideshow:
+            self.slideshow.next_image()
+            self.update_counter()
+    
+    def update_counter(self):
+        """Update the slide counter"""
+        if self.slideshow and self.counter_label:
+            counter_text = self.slideshow.get_current_info()
+            self.counter_label.configure(text=counter_text)
+    
+    def schedule_counter_update(self):
+        """Schedule periodic counter updates for auto-slideshow"""
+        if self.frame and self.frame.winfo_exists():
+            self.update_counter()
+            # Schedule next update
+            self.frame.after(100, self.schedule_counter_update)

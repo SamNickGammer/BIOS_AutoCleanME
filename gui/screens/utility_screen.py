@@ -5,7 +5,8 @@ Utility screen implementation with modern light design
 import tkinter as tk
 from constants.app_config import AppConfig
 from functions.utility_functions import UtilityFunctions
-from gui.styles import ModernButton, ModernFrame
+from gui.components.modern_button import ModernButton
+from gui.components.modern_frame import ModernFrame
 
 class UtilityScreen:
     def __init__(self, parent):

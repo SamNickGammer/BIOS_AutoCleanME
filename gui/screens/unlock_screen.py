@@ -5,7 +5,8 @@ Unlock screen implementation with modern light design
 import tkinter as tk
 from constants.app_config import AppConfig
 from functions.unlock_functions import UnlockFunctions
-from gui.styles import ModernButton, ModernFrame
+from gui.components.modern_button import ModernButton
+from gui.components.modern_frame import ModernFrame
 
 class UnlockScreen:
     def __init__(self, parent):

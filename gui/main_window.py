@@ -3,9 +3,11 @@ Main window GUI implementation using tkinter with modern design
 """
 
 import tkinter as tk
+import tkinterdnd2 as tkdnd
 from constants.app_config import AppConfig
 from functions.app_functions import AppFunctions
-from gui.styles import ModernButton, ModernFrame
+from gui.components.modern_button import ModernButton
+from gui.components.modern_frame import ModernFrame
 from gui.screens.home_screen import HomeScreen
 from gui.screens.me_clean_screen import MECleanScreen
 from gui.screens.unlock_screen import UnlockScreen
@@ -14,7 +16,7 @@ from gui.screens.hp_dmi_screen import HPDMIScreen
 
 class MainWindow:
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = tkdnd.Tk()  # Use tkinterdnd2 Tk for drag & drop support
         self.functions = AppFunctions()
         self.current_screen = None
         self.active_button = None
